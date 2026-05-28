@@ -11,10 +11,10 @@ export class Pessoa {
     private _id_pessoa?: number;
     private _nome_pessoa: string = '';
     private _email: string = '';
-    private _tipo: string = '';
+    private _tipo?: string 
 
     //Construtor
-    constructor(nome_pessoa: string, email: string, tipo: string, id_pessoa?: number) {
+    constructor(nome_pessoa: string, email: string, tipo?: string, id_pessoa?: number) {
         this.Nome = nome_pessoa;
         this._email = email;
         this._tipo = tipo;
@@ -34,7 +34,7 @@ export class Pessoa {
         return this._email;
     }
 
-    public get Tipo(): string {
+    public get Tipo(): string | undefined {
         return this._tipo;
     }
 
@@ -49,8 +49,8 @@ export class Pessoa {
         return new Pessoa(nome_pessoa, email, tipo);
     }
 
-    public static editar(nome_pessoa: string, email: string, tipo: string, id_pessoa: number)  {
-        return new Pessoa(nome_pessoa, email, tipo, id_pessoa);
+    public static editar(nome_pessoa: string, email: string, id_pessoa: number)  {
+        return new Pessoa(nome_pessoa, email, undefined, id_pessoa);
     }
 
     private _validarNome(value: string): void {
