@@ -22,6 +22,15 @@ export class PedidoRepository {
     const [rows] = await db.execute<RowDataPacket[]>(sql, values);
     return rows;
   }
+  async selectByClienteOrForncedor(
+    id_cliente_fornecedor: number,
+  ): Promise<RowDataPacket[]> {
+    const sql =
+      "SELECT p.*, CASE WHEN p.tipo = 'C' THEN 'CLIENTE' ELSE 'FORNECEDOR' END AS tipo_cadastro FROM pedidos pe JOIN pessoas p ON pe.id_cliente_fornecedor = p.id WHERE pe.id_cliente_fornecedor = ?;;";
+    const values = [id_cliente_fornecedor];
+    const [rows] = await db.execute<RowDataPacket[]>(sql, values);
+    return rows;
+  }
 
   async create(
     dados: Omit<Pedido, "id_pedido">,
@@ -74,10 +83,7 @@ export class PedidoRepository {
         dados.Tipo.toUpperCase() == "COMPRA"
           ? "UPDATE estoque SET quantidade = quantidade + ? WHERE id_produto=? "
           : "UPDATE estoque SET quantidade = quantidade - ? WHERE id_produto=? ";
-      const valuesEstoque = [
-        dadosItens.Quantidade,
-         dadosItens.IdProduto,
-      ];
+      const valuesEstoque = [dadosItens.Quantidade, dadosItens.IdProduto];
       const [rowsEstoque] = await conn.execute<ResultSetHeader>(
         sqlEstoque,
         valuesEstoque,

@@ -1,19 +1,51 @@
 import { Request, Response } from "express";
 import { PedidoService } from "../services/pedido.service";
+import { Pessoa } from "../models/pessoa.model";
+import { PessoaRepository } from "../repository/pessoa.model";
 
 export class PedidoController {
   constructor(private _service = new PedidoService()) {}
 
   criar = async (req: Request, res: Response) => {
     try {
-      const { tipo, idClienteFornecedor, idFuncionario,quantidade, id_produto } = req.body;
-      req.body;
-      const novo = await this._service.criarPedido(
+      const {
         tipo,
         idClienteFornecedor,
         idFuncionario,
-        quantidade, id_produto 
-      );
+        quantidade,
+        id_produto,
+      } = req.body;
+      req.body;
+
+      // Campos obrigatórios: validação
+      if (
+        !tipo == undefined ||
+        tipo == null ||
+        tipo.toString() === "" ||
+        idClienteFornecedor == undefined ||
+        idClienteFornecedor == null ||
+        idFuncionario == undefined ||
+        idFuncionario == null ||
+        quantidade == undefined ||
+        quantidade == null
+      ){
+        return res.status(400).json({error:"Erro: Os campos devem ser todos válidos e preenchidos."})
+      }
+
+      // Transforma o valor digitado para letras maiusculas e verifica se é uma compra ou venda
+      if(tipo.toUpperCase() != "COMPRA" && tipo.toUpperCase() != "VENDA" ){
+        return res.status(400).json({ erro: 'Tipo de transação inválido' });
+      }
+
+      
+
+        const novo = await this._service.criarPedido(
+          tipo,
+          idClienteFornecedor,
+          idFuncionario,
+          quantidade,
+          id_produto,
+        );
       res.status(201).json({ novo });
     } catch (error: unknown) {
       console.error(error);
@@ -33,12 +65,12 @@ export class PedidoController {
   editar = async (req: Request, res: Response) => {
     try {
       const { tipo, idClienteFornecedor, idFuncionario } = req.body;
-      const idPedido = Number(req.query.idFormatado);      
+      const idPedido = Number(req.query.idFormatado);
       const alterado = await this._service.editarPedido(
         tipo,
         idClienteFornecedor,
         idFuncionario,
-        idPedido
+        idPedido,
       );
       res.status(200).json({ alterado });
     } catch (error: unknown) {
@@ -88,7 +120,6 @@ export class PedidoController {
   selecionarIdFormatado = async (req: Request, res: Response) => {
     try {
       const idFormatado = Number(req.params.idFormatado);
-      console.log(idFormatado);
 
       // Chama o novo método do Service
       const pedidoFormatados =
@@ -121,33 +152,33 @@ export class PedidoController {
     }
   };
   selecionarPorClienteFornecedor = async (req: Request, res: Response) => {
-  try {
-    const idClienteFornecedor = Number(req.params.id_cliente_fornecedor);
+    try {
+      const idClienteFornecedor = Number(req.params.id_cliente_fornecedor);
 
-    if (isNaN(idClienteFornecedor)) {
-      return res.status(400).json({
-        message: 'ID cliente/fornecedor inválido',
+      if (isNaN(idClienteFornecedor)) {
+        return res.status(400).json({
+          message: "ID cliente/fornecedor inválido",
+        });
+      }
+
+      const pedidosClientes =
+        await this._service.selecionarPorClienteFornecedor(idClienteFornecedor);
+
+      if (!pedidosClientes) {
+        return res.status(404).json({
+          message: "Pedidos não encontrados",
+        });
+      }
+
+      return res.status(200).json({
+        message: "Pedidos encontrados",
+        dados: pedidosClientes,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        message: "Erro interno do servidor",
       });
     }
-
-    const pedidosClientes =
-      await this._service.selecionarPorClienteFornecedor(idClienteFornecedor);
-
-    if (!pedidosClientes) {
-      return res.status(404).json({
-        message: 'Pedidos não encontrados',
-      });
-    }
-
-    return res.status(200).json({
-      message: 'Pedidos encontrados',
-      dados: pedidosClientes,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Erro interno do servidor',
-    });
-  }
-};
+  };
 }
