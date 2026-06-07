@@ -10,22 +10,16 @@ export class PedidoService {
     tipo: string,
     id_cliente_fornecedor: number,
     id_funcionario: number,
-    quantidade:number, id_produto:number
+    itens: { id_produto: number; quantidade: number }[],
   ) {
-    const pedidos = Pedido.criarPedido(
+    const pedido = Pedido.criarPedido(
       tipo,
       id_cliente_fornecedor,
       id_funcionario,
     );
-    const itenspedidos = ItensPedido.criarItensPedidos(
-      quantidade, 
-      id_produto,
-      undefined, 
-      undefined,
-    );
-
-    return await this._repository.create(pedidos, itenspedidos);
+    return await this._repository.create(pedido, itens);
   }
+
   async editarPedido(
     tipo: string,
     id_cliente_fornecedor: number,
@@ -40,43 +34,66 @@ export class PedidoService {
     );
     return await this._repository.update(id_pedido, pedidos);
   }
+
   /**
    * Busca todos os pedidos e retorna formatadas com mostrarDados()
    */
   async selecionarTodosFormatado(): Promise<Pedido[]> {
-    // Busca no banco que vem como array de objetos simples
     const pedidosDoBanco = await this._repository.findAll();
 
-    // Para cada pedido que tem no banco:
     return pedidosDoBanco.map((row: any) => {
-      // Vai ser criado uma instância da classe Pedidos
       const pedidos = new Pedido(
         row.tipo,
         row.id_cliente_fornecedor,
         row.id_funcionario,
         row.id_pedido,
       );
-
-      // Chama o método mostrarDados() dessa instância
       return pedidos.mostrarDados();
     });
   }
 
+  async selecionarTodosComItens() {
+    const rows = await this._repository.findAllComItens();
+
+    // Agrupa os itens por pedido, o map é como um dicionário onde a chave é o id_pedido para evitar pedidos duplicados.
+    const pedidosMap = new Map<number, any>();
+
+    // o for vai percorrer cada linha do banco
+    for (const row of rows) {
+      // se o pedido ainda não exista no Map, ele cria o pedido com itens:[]
+      if (!pedidosMap.has(row.id_pedido)) {
+        pedidosMap.set(row.id_pedido, {
+          id_pedido: row.id_pedido,
+          tipo: row.tipo,
+          valor_total: row.valor_total,
+          cliente_fornecedor: row.nome_cliente_fornecedor,
+          funcionario: row.nome_funcionario,
+          itens: [],
+        });
+      }
+      // para cada linha pega o pedido pelo id e coloca o item no array itens
+      pedidosMap.get(row.id_pedido).itens.push({
+        id_itens_pedido: row.id_itens_pedido,
+        nome_produto: row.nome_produto,
+        valor_produto: row.valor_produto,
+        quantidade: row.quantidade,
+        status: row.status,
+      });
+    }
+    // aqui ele vai converter o map em um array e retornar os valores.
+    return Array.from(pedidosMap.values());
+  }
   /**
-   * Busca um clientea por ID e retorna formatada com mostrarDados()
+   * Busca um pedido por ID e retorna formatado com mostrarDados()
    */
   async selecionarIdFormatado(id_pedido: number): Promise<Pedido | null> {
-    // Faz uma busca no banco
     const rows = await this._repository.selectById(id_pedido);
     console.log(id_pedido);
 
-    // Se não achou, retorna null
     if (rows.length === 0) return null;
 
-    // Pega a primeira (e única) pedido encontrada
     const row = rows[0];
 
-    // Cria INSTÂNCIA e chama mostrarDados()
     const pedidos = new Pedido(
       row.tipo,
       row.id_cliente_fornecedor,
@@ -87,23 +104,15 @@ export class PedidoService {
     return pedidos.mostrarDados();
   }
 
- async selecionarPorClienteFornecedor(
-  idClienteFornecedor: number
-): Promise<Pedido[]> {
+  async selecionarTipoPessoa(idClienteFornecedor: number) {
+    return await this._repository.selectTipoPessoa(idClienteFornecedor);
+  }
 
-  const rows =
-    await this._repository.selectByCliente(idClienteFornecedor);
+  async selecionarProdutoPorId(idProduto: number) {
+    return await this._repository.selectByIdProduct(idProduto);
+  }
 
-  if (rows.length === 0) return [];
-
-  return rows.map(row => {
-    const pedido = new Pedido(
-      row.tipo,
-      row.id_cliente_fornecedor,
-      row.id_funcionario,
-      row.id_pedido
-    );
-    return pedido.mostrarDados();
-  });
-}
+  async selecionarEstoquePorProduto(idProduto: number) {
+    return await this._repository.selectEstoqueByProduto(idProduto);
+  }
 }
