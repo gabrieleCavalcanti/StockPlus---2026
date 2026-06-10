@@ -1,5 +1,6 @@
 import { db } from "../database/connection.database";
 import { IPessoa, Pessoa } from "../models/pessoa.model";
+import { ILogin } from "../models/LoginModel";
 import { ResultSetHeader, PoolConnection } from "mysql2/promise";
 
 export class PessoaRepository {
@@ -63,7 +64,6 @@ export class PessoaRepository {
                 await connection.execute<ResultSetHeader>(sqlCliente, [infoExtra.cpf, id_pessoa]);
             }
 
-            // FORNECEDOR
             if (dados.Tipo === 'FORNECEDOR') {
                 const id_pessoa = resultPessoa.insertId;
                 const sqlFornecedor = `INSERT INTO fornecedor (cnpj, id_pessoa)VALUES (?, ?); `;
@@ -74,14 +74,35 @@ export class PessoaRepository {
                 );
             }
 
-            // FUNCIONARIO
             if (dados.Tipo === 'FUNCIONARIO') {
                 const id_pessoa = resultPessoa.insertId;
-                const sqlFuncionario = `
-                INSERT INTO funcionarios (cargo,data_admissao,id_pessoa) VALUES (?, ?, ?);`;
 
-                await connection.execute<ResultSetHeader>(sqlFuncionario, [infoExtra.cargo, infoExtra.data_admissao, id_pessoa]);
-            }
+                const sqlFuncionario = `
+                    INSERT INTO funcionarios (cargo, data_admissao, id_pessoa)
+                    VALUES (?, ?, ?);
+                    `;
+
+                const [resultFuncionario] = await connection.execute<ResultSetHeader>(
+                    sqlFuncionario,
+                    [infoExtra.cargo, infoExtra.data_admissao, id_pessoa]
+                );
+
+                const id_func = resultFuncionario.insertId;
+
+                const sqlLogin = `
+                    INSERT INTO login (username, password_hash, id_func)
+                    VALUES (?, ?, ?);
+                `;
+
+                await connection.execute<ResultSetHeader>(
+                    sqlLogin,
+                    [
+                        infoExtra.username,
+                        infoExtra.password_hash,
+                        id_func
+                    ]
+                );
+                }
 
             await connection.commit();
 

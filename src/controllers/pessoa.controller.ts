@@ -1,8 +1,19 @@
 import { Request, Response } from "express";
 import { PessoaService } from "../services/pessoa.service";
 
+import bcrypt from 'bcryptjs';
+import { LoginRepository } from "../repository/LoginRepository";
+import { JwtService } from "../utils/JwtService";
+
 export class PessoaController {
-    constructor(private _service = new PessoaService()) { }
+    private loginRepo: LoginRepository;
+    private jwtService: JwtService;
+    private bcryptRounds: number;
+    constructor(private _service = new PessoaService(),) {
+        this.loginRepo = new LoginRepository();
+        this.jwtService = new JwtService();
+        this.bcryptRounds = Number(process.env.BCRYPT_ROUNDS) || 10;
+    }
 
     selecionaTodos = async (req: Request, res: Response) => {
         try {
@@ -155,8 +166,37 @@ export class PessoaController {
                         return res.status(400).json({ message: "Data de admissão é obrigatória" });
                     }
 
-                    break;
+                    if (!infoExtra.username || !infoExtra.password) {
+                        return res.status(400).json({
+                            message: 'Usuário e senha são obrigatórios'
+                        });
+                    }
 
+                    if (infoExtra.password.length < 6) {
+                        return res.status(400).json({
+                            message: 'A senha deve ter ao menos 6 caracteres'
+                        });
+                    }
+
+                    const userExisting = await this.loginRepo.findByUsername(
+                        infoExtra.username.trim()
+                    );
+
+                    if (userExisting) {
+                        return res.status(409).json({
+                            message: 'Username já existe'
+                        });
+                    }
+
+                    const password_hash = await bcrypt.hash(
+                        infoExtra.password,
+                        this.bcryptRounds
+                    );
+
+                    delete infoExtra.password;
+                    infoExtra.password_hash = password_hash;
+
+                    break;
 
                 case "FORNECEDOR":
 
