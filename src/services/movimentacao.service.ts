@@ -1,5 +1,5 @@
 import { MovimentacaoRepository } from "../repository/movimentacao.repository";
-import { IMovimentacao } from "../models/movimentacao.model"; // Importado a interface com "I"
+import { IMovimentacao } from "../models/movimentacao.model"; 
 
 export class MovimentacaoService {
 constructor(private _repository = new MovimentacaoRepository()) { }
