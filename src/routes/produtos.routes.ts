@@ -8,6 +8,7 @@ const produtoRoutes = Router();
 produtoRoutes.get('/produtos', produtoController.buscarProduto)
 produtoRoutes.get('/produtosPorNome', produtoController.buscarPorNome)
 produtoRoutes.get('/verificarValidades', produtoController.verificarValidades)
+produtoRoutes.get('/verificarAlertas', produtoController.verificarAlertas)
 produtoRoutes.get('/produtosPorValidade', produtoController.buscarPorValidade)
 produtoRoutes.post('/produtos', uploadImage, produtoController.criar)
 produtoRoutes.patch('/produtos/:id_produto', uploadImage,produtoController.editar );
