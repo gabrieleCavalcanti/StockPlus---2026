@@ -10,8 +10,8 @@ const verificaDir = (dir: string): void => {
     try {
         fs.mkdirSync(dir, { recursive: true });
     } catch (err) {
-        console.error("Erro ao criar diretório:", err);
-    }
+  throw new Error("Falha ao criar diretório de upload");
+}
 };
 
 interface MulterOptions {

@@ -52,11 +52,26 @@ export class Produto {
         this._nomeProduto = nome_produto;
     }
 
-    public static criar(nome_produto: string, valor_produto:number, vinculo_imagem: string, data_vencimento: Date, id_categoria: number): Produto {
+    public static criar(nome_produto: string, valor_produto: number, vinculo_imagem: string, data_vencimento: Date, id_categoria: number): Produto {
         return new Produto(nome_produto, vinculo_imagem, id_categoria, data_vencimento, valor_produto)
     }
-    public static editar(nome_produto: string, valor_produto: number, vinculo_imagem: string, data_vencimento: Date, id_categoria: number, id_produto: number) {
-        return new Produto(nome_produto, vinculo_imagem, id_categoria, data_vencimento, id_produto, valor_produto)
+
+    public static editar(
+        nome_produto: string,
+        valor_produto: number,
+        vinculo_imagem: string,
+        data_vencimento: Date,
+        id_categoria: number,
+        id_produto: number
+    ): Produto {
+        return new Produto(
+            nome_produto,
+            vinculo_imagem,
+            id_categoria,
+            data_vencimento,
+            valor_produto, 
+            id_produto     
+        );
     }
 
     private _validarNomeProduto(nome_produto: string): void {
