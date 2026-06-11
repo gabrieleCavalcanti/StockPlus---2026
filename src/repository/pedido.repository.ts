@@ -2,7 +2,8 @@ import { db } from "../database/connection.database";
 import { Pedido } from "../models/pedido.model";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ItensPedido } from "../models/itensPedido.model";
-
+import { StatusItensPedido } from "../config/enum/statusItensPedido.enum";
+import { TipoMovimentacao } from "../config/enum/tipoMovimentacao.enum";
 export class PedidoRepository {
   async findAll(): Promise<RowDataPacket[]> {
     const [rows] = await db.execute<RowDataPacket[]>("SELECT * FROM pedidos;");
@@ -102,17 +103,21 @@ export class PedidoRepository {
           "INSERT INTO itensPedido (quantidade, status, id_pedido, id_produto, valor_unitario) VALUES (?,?,?,?,?);",
           [
             item.quantidade,
-            "CONCLUIDO",
+            StatusItensPedido.CONCLUIDO,
             rows.insertId,
             item.id_produto,
             produto.valor_produto,
           ],
         );
 
+        const tipoMov =
+          dados.Tipo.toUpperCase() === "COMPRA"
+            ? TipoMovimentacao.ENTRADA
+            : TipoMovimentacao.SAIDA;
         // Insere movimentação
         await conn.execute(
           "INSERT INTO movimentacoes (quantidade, status, id_itens_pedido) VALUES (?,?,?);",
-          [item.quantidade, "CONCLUIDO", rowsItens.insertId],
+          [item.quantidade, tipoMov, rowsItens.insertId],
         );
 
         // Atualiza estoque
