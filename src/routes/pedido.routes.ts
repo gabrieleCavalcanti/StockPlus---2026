@@ -6,6 +6,7 @@ const pedidoRoutes = Router();
 
 // pedidoRoutes.get('/pedidos', pedidoController.selecionarTodos);
 pedidoRoutes.get('/pedidos', pedidoController.selecionarTodosFormatado);
+pedidoRoutes.get("/pedidos/itens", pedidoController.selecionarTodosComItens);
 pedidoRoutes.get('/pedido/cliente/:id_cliente_fornecedor', pedidoController.selecionarPorClienteFornecedor);
 pedidoRoutes.get('/pedido/:idFormatado', pedidoController.selecionarIdFormatado)
 pedidoRoutes.post('/pedidos', pedidoController.criar);
