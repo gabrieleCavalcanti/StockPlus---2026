@@ -1,8 +1,19 @@
 import { Request, Response } from "express";
 import { PessoaService } from "../services/pessoa.service";
 
+import bcrypt from 'bcryptjs';
+import { LoginRepository } from "../repository/LoginRepository";
+import { JwtService } from "../utils/JwtService";
+
 export class PessoaController {
-    constructor(private _service = new PessoaService()) { }
+    private loginRepo: LoginRepository;
+    private jwtService: JwtService;
+    private bcryptRounds: number;
+    constructor(private _service = new PessoaService(),) {
+        this.loginRepo = new LoginRepository();
+        this.jwtService = new JwtService();
+        this.bcryptRounds = Number(process.env.BCRYPT_ROUNDS) || 10;
+    }
 
     selecionaTodos = async (req: Request, res: Response) => {
         try {
@@ -89,16 +100,16 @@ export class PessoaController {
             const { nome_pessoa, email, tipo, ...infoExtra } = req.body;
 
 
-            if (!nome_pessoa || nome_pessoa.trim() === '') {
-                return res.status(400).json({ message: "Nome é obrigatório" });
+            if (!nome_pessoa || typeof nome_pessoa !== "string" || nome_pessoa.trim() === '') {
+                return res.status(400).json({ message: "Nome inválido" });
             }
 
-            if (!email || email.trim() === '') {
-                return res.status(400).json({ message: "Email é obrigatório" });
+            if (!email || typeof email !== "string" || email.trim() === '') {
+                return res.status(400).json({ message: "Email inválido" });
             }
 
-            if (!tipo || tipo.trim() === '') {
-                return res.status(400).json({ message: "Tipo é obrigatório" });
+            if (!tipo || typeof tipo !== "string" || tipo.trim() === '') {
+                return res.status(400).json({ message: "Tipo inválido" });
             }
 
 
@@ -125,11 +136,8 @@ export class PessoaController {
 
                 case "CLIENTE":
 
-                    if (
-                        !infoExtra.cpf ||
-                        infoExtra.cpf.trim() === ''
-                    ) {
-                        return res.status(400).json({ message: "CPF é obrigatório" });
+                    if (!infoExtra.cpf || typeof infoExtra.cpf !== "string" || infoExtra.cpf.trim() === '') {
+                        return res.status(400).json({ message: "CPF inválido" });
                     }
 
                     // CPF somente números
@@ -144,27 +152,51 @@ export class PessoaController {
 
                 case "FUNCIONARIO":
 
-                    if (
-                        !infoExtra.cargo ||
-                        infoExtra.cargo.trim() === ''
-                    ) {
-                        return res.status(400).json({ message: "Cargo é obrigatório" });
+                    if (!infoExtra.cargo || typeof infoExtra.cargo !== "string" || infoExtra.cargo.trim() === '') {
+                        return res.status(400).json({ message: "Cargo inválido" });
                     }
 
-                    if (!infoExtra.data_admissao) {
-                        return res.status(400).json({ message: "Data de admissão é obrigatória" });
+                    if (!infoExtra.data_admissao || typeof infoExtra.data_admissao !== "string" || isNaN(Date.parse(infoExtra.data_admissao))) {
+                        return res.status(400).json({ message: "Data de admissão inválido" });
                     }
+
+                    if (!infoExtra.username || !infoExtra.password || typeof infoExtra.password !== "string" || typeof infoExtra.username !== "string" || !infoExtra.password) {
+                        return res.status(400).json({
+                            message: 'Usuário e/ou senha inválidos'
+                        });
+                    }
+
+                    if (infoExtra.password.length < 6) {
+                        return res.status(400).json({
+                            message: 'A senha deve ter ao menos 6 caracteres'
+                        });
+                    }
+
+                    const userExisting = await this.loginRepo.findByUsername(
+                        infoExtra.username.trim()
+                    );
+
+                    if (userExisting) {
+                        return res.status(409).json({
+                            message: 'Username já existe'
+                        });
+                    }
+
+                    const password_hash = await bcrypt.hash(
+                        infoExtra.password,
+                        this.bcryptRounds
+                    );
+
+                    delete infoExtra.password;
+                    infoExtra.password_hash = password_hash;
 
                     break;
 
-
                 case "FORNECEDOR":
 
-                    if (
-                        !infoExtra.cnpj ||
-                        infoExtra.cnpj.trim() === ''
+                    if (!infoExtra.cnpj || typeof infoExtra.cnpj !== "string" || infoExtra.cnpj.trim() === ''
                     ) {
-                        return res.status(400).json({ message: "CNPJ é obrigatório" });
+                        return res.status(400).json({ message: "CNPJ inválido" });
                     }
 
                     // CNPJ somente números
@@ -208,12 +240,12 @@ export class PessoaController {
                 return res.status(400).json({ message: "Id inválido" });
             }
 
-            if (!nome_pessoa || nome_pessoa.trim() === '') {
-                return res.status(400).json({ message: "Nome é obrigatório" });
+            if (!nome_pessoa || typeof nome_pessoa !== "string" || nome_pessoa.trim() === '') {
+                return res.status(400).json({ message: "Nome inválido" });
             }
 
-            if (!email || email.trim() === '') {
-                return res.status(400).json({ message: "Email é obrigatório" });
+            if (!email || typeof email !== "string" || email.trim() === '') {
+                return res.status(400).json({ message: "Email inválido" });
             }
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -229,8 +261,8 @@ export class PessoaController {
             // CLIENTE
             if (tipo === 'CLIENTE') {
 
-                if (!infoExtra.cpf || infoExtra.cpf.trim() === '') {
-                    return res.status(400).json({ message: "CPF Obrigatorio" });
+                if (!infoExtra.cpf || typeof infoExtra.cpf !== "string" || infoExtra.cpf.trim() === '') {
+                    return res.status(400).json({ message: "CPF inválido" });
                 }
 
                 const cpf = infoExtra.cpf.replace(/\D/g, '');
@@ -247,8 +279,8 @@ export class PessoaController {
             // FORNECEDOR
             if (tipo === 'FORNECEDOR') {
 
-                if (!infoExtra.cnpj || infoExtra.cnpj.trim() === '') {
-                    return res.status(400).json({ message: "CNPJ Obrigatorio" });
+                if (!infoExtra.cnpj || typeof infoExtra.cnpj !== "string" || infoExtra.cnpj.trim() === '') {
+                    return res.status(400).json({ message: "CNPJ inválido" });
                 }
 
                 const cnpj = infoExtra.cnpj.replace(/\D/g, '');
@@ -265,14 +297,11 @@ export class PessoaController {
             // FUNCIONARIO
             if (tipo === 'FUNCIONARIO') {
 
-                if (!infoExtra.cargo || infoExtra.cargo.trim() === '') {
-                    return res.status(400).json({ message: "Cargo é obrigatório" });
+                if (!infoExtra.cargo || typeof infoExtra.cargo || infoExtra.cargo.trim() === '') {
+                    return res.status(400).json({ message: "Cargo inválido" });
                 }
 
-                if (
-                    !infoExtra.data_admissao ||
-                    isNaN(Date.parse(infoExtra.data_admissao))
-                ) {
+                if (!infoExtra.data_admissao || typeof infoExtra.data_admissao !== "string" || isNaN(Date.parse(infoExtra.data_admissao))) {
                     return res.status(400).json({ message: "Data de admissão inválida" });
                 }
             }

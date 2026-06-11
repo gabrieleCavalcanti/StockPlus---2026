@@ -8,8 +8,8 @@ export class EstoqueRepository {
         return rows;
     }
 
-    async findById(id_produto: number): Promise<IEstoque[] | undefined> {
-        const [rows] = await db.execute<IEstoque[]>('select * from estoque where id_produto = ?;', [id_produto]);
+    async findById(id_estoque: number): Promise<IEstoque[] | undefined> {
+        const [rows] = await db.execute<IEstoque[]>('select * from estoque where id_estoque = ?;', [id_estoque]);
         return rows;
     }
 

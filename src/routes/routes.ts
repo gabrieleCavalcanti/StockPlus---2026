@@ -9,9 +9,12 @@ import movimentacaoRoutes from "./movimentacao.routes";
 import pedidoRoutes from "./pedido.routes";
 import pessoaRoutes from "./pessoa.routes";
 import produtoRoutes from "./produtos.routes";
+import authRoutes from "./AuthRoutes";
 
 
 const router = Router();
+
+router.use('/auth', authRoutes);
 
 router.use('/', categoriaRoutes);
 router.use('/', telefoneRoutes);
