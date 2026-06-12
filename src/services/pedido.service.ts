@@ -21,13 +21,11 @@ export class PedidoService {
   }
 
   async editarPedido(
-    tipo: string,
     id_cliente_fornecedor: number,
     id_funcionario: number,
     id_pedido: number,
   ) {
     const pedidos = Pedido.editarPedido(
-      tipo,
       id_cliente_fornecedor,
       id_funcionario,
       id_pedido,
@@ -115,4 +113,8 @@ export class PedidoService {
   async selecionarEstoquePorProduto(idProduto: number) {
     return await this._repository.selectEstoqueByProduto(idProduto);
   }
+
+  async buscarPedidoPorId(idPedido: number) {
+  return await this._repository.selectById(idPedido);
+}
 }
