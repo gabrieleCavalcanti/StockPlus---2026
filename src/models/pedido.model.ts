@@ -75,14 +75,17 @@ export class Pedido {
   // Update
 
   public static editarPedido(
-    tipo: string,
-    id_cliente_fornecedor: number,
-    id_funcionario: number,
-    id_pedido: number,
-    
-  ): Pedido {
-    return new Pedido(tipo, id_cliente_fornecedor, id_funcionario, id_pedido );
-  }
+  id_cliente_fornecedor: number,
+  id_funcionario: number,
+  id_pedido: number,
+): Pedido {
+  return new Pedido(
+    "", // tipo
+    id_cliente_fornecedor,
+    id_funcionario,
+    id_pedido
+  );
+}
 
   inserir(): Pedido {
     return this;

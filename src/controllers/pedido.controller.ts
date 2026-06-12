@@ -8,12 +8,7 @@ export class PedidoController {
 
   criar = async (req: Request, res: Response) => {
     try {
-      const {
-        tipo,
-        idClienteFornecedor,
-        idFuncionario,
-        itens,
-      } = req.body;
+      const { tipo, idClienteFornecedor, idFuncionario, itens } = req.body;
       req.body;
 
       // Campos obrigatórios: validação
@@ -98,11 +93,9 @@ export class PedidoController {
           const estoque =
             await this._service.selecionarEstoquePorProduto(id_produto);
           if (estoque.length === 0) {
-            return res
-              .status(404)
-              .json({
-                erro: `Estoque não encontrado para o produto ${id_produto}`,
-              });
+            return res.status(404).json({
+              erro: `Estoque não encontrado para o produto ${id_produto}`,
+            });
           }
           if (quantidade <= 0) {
             return res
@@ -110,11 +103,9 @@ export class PedidoController {
               .json({ erro: "A quantidade deve ser maior que zero" });
           }
           if (quantidade > estoque[0].quantidade) {
-            return res
-              .status(400)
-              .json({
-                erro: `Estoque insuficiente para produto ${id_produto}. Disponível: ${estoque[0].quantidade}`,
-              });
+            return res.status(400).json({
+              erro: `Estoque insuficiente para produto ${id_produto}. Disponível: ${estoque[0].quantidade}`,
+            });
           }
         }
       }
@@ -143,10 +134,73 @@ export class PedidoController {
 
   editar = async (req: Request, res: Response) => {
     try {
-      const { tipo, idClienteFornecedor, idFuncionario } = req.body;
-      const idPedido = Number(req.query.idFormatado);
+      const { idClienteFornecedor, idFuncionario } = req.body;
+      const idPedido = Number(req.params.idFormatado);
+
+      // Valida o idPedido
+      if (idPedido === undefined || idPedido === null) {
+        return res.status(400).json({
+          erro: "ID do pedido não informado",
+        });
+      }
+      // 2️⃣ Validação de campos obrigatórios
+      if (idClienteFornecedor == null || idFuncionario == null) {
+        return res.status(400).json({
+          erro: "ID do cliente/fornecedor e funcionário são obrigatórios",
+        });
+      }
+
+      // Verifica se o pedido existe
+      const pedido = await this._service.buscarPedidoPorId(idPedido);
+
+      if (!pedido) {
+        return res.status(404).json({
+          erro: "Pedido não encontrado",
+        });
+      }
+
+      // Verifica se cliente/fornecedor existe
+      const pessoa =
+        await this._service.selecionarTipoPessoa(idClienteFornecedor);
+
+      if (pessoa.length === 0) {
+        return res.status(404).json({
+          erro: "Pessoa não encontrada",
+        });
+      }
+
+      if (!idClienteFornecedor || Number.isNaN(idClienteFornecedor)) {
+        return res.status(400).json({
+          erro: "ID do cliente/fornecedor inválido",
+        });
+      }
+
+      const tipoPessoa = pessoa[0].tipo.toUpperCase();
+
+      if (tipoPessoa !== "CLIENTE" && tipoPessoa !== "FORNECEDOR") {
+        return res.status(400).json({
+          erro: "O ID informado não é um cliente nem um fornecedor válido",
+        });
+      }
+      
+      // 6️⃣ Validação se o idFuncionario é funcionário
+      const funcionario =
+        await this._service.selecionarTipoPessoa(idFuncionario);
+
+      if (funcionario.length === 0) {
+        return res.status(404).json({
+          erro: "Funcionário não encontrado",
+        });
+      }
+
+      const tipoFuncionario = funcionario[0].tipo.toUpperCase();
+
+      if (tipoFuncionario !== "FUNCIONARIO") {
+        return res.status(400).json({
+          erro: "O ID informado não pertence a um funcionário",
+        });
+      }
       const alterado = await this._service.editarPedido(
-        tipo,
         idClienteFornecedor,
         idFuncionario,
         idPedido,
@@ -197,28 +251,28 @@ export class PedidoController {
   };
 
   selecionarTodosComItens = async (req: Request, res: Response) => {
-  try {
-    const pedidos = await this._service.selecionarTodosComItens();
+    try {
+      const pedidos = await this._service.selecionarTodosComItens();
 
-    res.status(200).json({
-      message: "Lista de pedidos com itens",
-      quantidade: pedidos.length,
-      dados: pedidos,
-    });
-  } catch (error: unknown) {
-    console.error(error);
-    if (error instanceof Error) {
-      return res.status(500).json({
+      res.status(200).json({
+        message: "Lista de pedidos com itens",
+        quantidade: pedidos.length,
+        dados: pedidos,
+      });
+    } catch (error: unknown) {
+      console.error(error);
+      if (error instanceof Error) {
+        return res.status(500).json({
+          message: "Ocorreu um erro no servidor",
+          errorMessage: error.message,
+        });
+      }
+      res.status(500).json({
         message: "Ocorreu um erro no servidor",
-        errorMessage: error.message,
+        errorMessage: "Erro desconhecido",
       });
     }
-    res.status(500).json({
-      message: "Ocorreu um erro no servidor",
-      errorMessage: "Erro desconhecido",
-    });
-  }
-};
+  };
   selecionarIdFormatado = async (req: Request, res: Response) => {
     try {
       const idFormatado = Number(req.params.idFormatado);

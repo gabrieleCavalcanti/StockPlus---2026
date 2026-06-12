@@ -91,15 +91,15 @@ export class ItensPedido {
 
 //   // Update
 
-  public static editarItensPedidos(
-    quantidade: number,
-    id_produto: number,
-    status: string,
-    id_pedido: number,
+  // public static editarItensPedidos(
+  //   quantidade: number,
+  //   id_produto: number,
+  //   status: string,
+  //   id_pedido: number,
     
-  ): ItensPedido {
-    return new ItensPedido(quantidade,id_produto, status, id_pedido);
-  }
+  // ): ItensPedido {
+  //   return new ItensPedido(quantidade,id_produto, status, id_pedido);
+  // }
 
   inserir(): ItensPedido {
     return this;
